@@ -38,6 +38,7 @@ async def request_completion(
 
     if start_handler:
         start_handler(buffer, acc, event_queue if event_queue is not None else [])
+
     async for token in stream:
         async with buffer_lock:
             if not first_token_received:
@@ -51,6 +52,7 @@ async def request_completion(
             else:
                 acc.value += buffer.value
                 buffer.value = ""
+
     if stop_handler:
         stop_handler(buffer, acc, event_queue if event_queue is not None else [])
 
