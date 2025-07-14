@@ -1,0 +1,4 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+PYTHONPATH="$SCRIPT_DIR/.." "$SCRIPT_DIR"/../.venv/bin/python -m bash_ai "$@"

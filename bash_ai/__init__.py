@@ -1,0 +1,110 @@
+import argparse
+import re
+import sys
+
+from .completion import request_completion
+from .models import Event, EventType, Ref
+from .prompts import PROMPT_TEMPLATE
+from .utils import ask_yes_no, print_styled, styled
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        prog="bash-ai", formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument("--session-file", type=str, help="Path to the session file")
+    parser.add_argument("message", nargs="*", help="User message to the AI")
+
+    args = parser.parse_args()
+
+    return args.session_file, " ".join(args.message)
+
+
+def flush_buffer(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
+    print_styled(buffer.value, "light_grey", end="", flush=True, file=sys.stderr)
+    acc.value += buffer.value
+    buffer.value = ""
+
+
+def buffer_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
+    OPENING_TAG = "<run-command>"
+    CLOSING_TAG = "</run-command>"
+    if buffer.value.find(OPENING_TAG) != -1 or any(
+        buffer.value.endswith(OPENING_TAG[: j + 1]) for j in range(len(OPENING_TAG))
+    ):
+        while True:
+            changed = False
+
+            if run_command_match := re.search(
+                rf"{OPENING_TAG}(.*?){CLOSING_TAG}", buffer.value
+            ):
+                command = run_command_match.group(1)
+                buffer.value = (
+                    buffer.value[: run_command_match.start()]
+                    + styled(command, "light_grey", "underline")
+                    + buffer.value[run_command_match.end() :]
+                )
+                event_queue.append(Event(EventType.SUGGEST_COMMAND, command))
+                changed = True
+
+            if not changed:
+                break
+    else:
+        flush_buffer(buffer, acc, event_queue)
+
+
+def stop_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
+    flush_buffer(buffer, acc, event_queue)
+    print(file=sys.stderr)
+
+
+async def main():
+    session_file, user_message = parse_arguments()
+
+    session_context = None
+    if session_file:
+        try:
+            with open(session_file, "r", errors="replace") as f:
+                session_context = f.read()
+        except:
+            pass
+
+    prompt = PROMPT_TEMPLATE.format(
+        session_context=session_context or "No session context provided",
+        user_message=user_message,
+    )
+
+    event_queue: list[Event] = []
+    try:
+        await request_completion(
+            [{"role": "user", "content": prompt}],
+            event_queue=event_queue,
+            buffer_handler=buffer_handler,
+            stop_handler=stop_handler,
+        )
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    commands_to_run: list[str] = []
+    for event in event_queue:
+        if event.type == EventType.SUGGEST_COMMAND:
+            print(
+                styled(f"\nAI suggests running this command:", "cyan"), file=sys.stderr
+            )
+            print(f"  {event.data}", file=sys.stderr)
+            if ask_yes_no(styled(f"Approve?", "cyan")):
+                commands_to_run.append(event.data)
+
+    if commands_to_run:
+        print_styled(
+            "\nThe following commands will be executed in order:",
+            "cyan",
+            file=sys.stderr,
+        )
+        for i, command in enumerate(commands_to_run, 1):
+            print(f"{i}. {command}", file=sys.stderr)
+        print(file=sys.stderr)
+
+    print("; ".join(commands_to_run), file=sys.stdout)
