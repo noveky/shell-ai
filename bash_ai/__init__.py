@@ -37,7 +37,7 @@ def buffer_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
             changed = False
 
             if run_command_match := re.search(
-                rf"{OPENING_TAG}(.*?){CLOSING_TAG}", buffer.value
+                rf"{OPENING_TAG}(.*?){CLOSING_TAG}", buffer.value, re.DOTALL
             ):
                 command = run_command_match.group(1)
                 buffer.value = (
