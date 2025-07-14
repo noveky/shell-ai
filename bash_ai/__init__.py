@@ -5,7 +5,7 @@ import sys
 from .completion import request_completion
 from .models import Event, EventType, Ref
 from .prompts import PROMPT_TEMPLATE
-from .utils import ask_yes_no, print_styled, styled
+from .utils import strip_ansi, ask_yes_no, print_styled, styled
 
 
 def parse_arguments():
@@ -78,7 +78,7 @@ async def main():
     if session_file:
         try:
             with open(session_file, "r", errors="replace") as f:
-                session_context = f.read()
+                session_context = strip_ansi(f.read())
         except:
             pass
 

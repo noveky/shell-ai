@@ -1,6 +1,6 @@
+import re
 import sys
 from typing import Literal
-
 
 StyleAttribute = (
     Literal[
@@ -112,6 +112,11 @@ def styled(text: object, *attrs: StyleAttribute) -> str:
 
 def print_styled(text: object, *attrs: StyleAttribute, **kwargs):
     print(styled(text, *attrs), **kwargs)
+
+
+def strip_ansi(ansi_string: str) -> str:
+    ansi_escape = re.compile(r"\x1B\[\d+(;\d+){0,2}m")
+    return ansi_escape.sub("", ansi_string)
 
 
 def ask_yes_no(question: str = "", default: bool | None = None) -> bool:
