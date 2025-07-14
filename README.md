@@ -1,6 +1,6 @@
 # Bash AI Assistant
 
-A smart LLM-based assistant that integrates with your bash terminal to perform context-aware command execution and provide answers to general questions.
+An LLM-based smart assistant that integrates with your bash terminal to perform context-aware command execution and provide answers to general questions.
 
 ## Getting Started
 
@@ -107,4 +107,4 @@ Pull requests are welcome! Please open an issue first to discuss what you'd like
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+[MIT](https://opensource.org/license/mit)
