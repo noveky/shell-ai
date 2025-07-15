@@ -3,9 +3,10 @@ import re
 import sys
 
 from .completion import request_completion
+from .config import MAX_CONTEXT_LENGTH
 from .models import Event, EventType, Ref
 from .prompts import PROMPT_TEMPLATE
-from .utils import strip_ansi, ask_yes_no, print_styled, styled
+from .utils import ask_yes_no, print_styled, strip_ansi, styled
 
 
 def parse_arguments():
@@ -33,8 +34,8 @@ def flush_buffer(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
 def buffer_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
     """Handle the response stream buffer."""
 
-    OPENING_TAG = "<run-command>"
-    CLOSING_TAG = "</run-command>"
+    OPENING_TAG = "<suggest-command>"
+    CLOSING_TAG = "</suggest-command>"
 
     # Check if the buffer contains tags or partial tags
     if buffer.value.find(OPENING_TAG) != -1 or any(
@@ -78,7 +79,7 @@ async def main():
     if session_file:
         try:
             with open(session_file, "r", errors="replace") as f:
-                session_context = strip_ansi(f.read())
+                session_context = strip_ansi(f.read())[-(MAX_CONTEXT_LENGTH or 0) :]
         except:
             pass
 
