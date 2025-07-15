@@ -115,8 +115,7 @@ def print_styled(text: object, *attrs: StyleAttribute, **kwargs):
 
 
 def strip_ansi(ansi_string: str) -> str:
-    ansi_escape = re.compile(r"\x1B\[\d+(;\d+){0,2}m")
-    return ansi_escape.sub("", ansi_string)
+    return re.sub(r"\x1B\[\d+(;\d+){0,2}m", "", ansi_string)
 
 
 def ask_yes_no(question: str = "", default: bool | None = None) -> bool:

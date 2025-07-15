@@ -14,12 +14,12 @@ def parse_arguments():
         prog="bash-ai", formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser.add_argument("--session-file", type=str, help="Path to the session file")
+    parser.add_argument("--context-file", type=str, help="Path to the context file")
     parser.add_argument("message", nargs="*", help="User message to the AI")
 
     args = parser.parse_args()
 
-    return args.session_file, " ".join(args.message)
+    return args.context_file, " ".join(args.message)
 
 
 def flush_buffer(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
@@ -72,13 +72,13 @@ def stop_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
 
 
 async def main():
-    session_file, user_message = parse_arguments()
+    context_file, user_message = parse_arguments()
 
-    # Read the bash session context if session file is provided
+    # Read the bash session context if context file is provided
     session_context = None
-    if session_file:
+    if context_file:
         try:
-            with open(session_file, "r", errors="replace") as f:
+            with open(context_file, "r", errors="replace") as f:
                 session_context = strip_ansi(f.read())[-(MAX_CONTEXT_LENGTH or 0) :]
         except:
             pass

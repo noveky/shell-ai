@@ -23,10 +23,11 @@ An LLM-based smart assistant that integrates with your bash terminal to perform 
 
     ```bash
     # Session logging
-    # initialize session logging with real output capture
+
+    # initialize session logging with output capture
     start-session-logging() {
         export SESSION_LOG_INITIALIZED=1
-        export SESSION_LOG_FILE="/tmp/bash_session_$(date +%Y%m%d_%H%M%S).log"
+        export SESSION_LOG_FILE="/tmp/bash_session_$(date +%Y%m%d_%H%M%S).ansi"
 
         # redirect all output to both terminal and log file
         script -fq "$SESSION_LOG_FILE"
@@ -36,10 +37,18 @@ An LLM-based smart assistant that integrates with your bash terminal to perform 
         start-session-logging
     fi
 
+    # redirect `clear` command to clear the session log file as well
+    clear() {
+        command clear
+        : > "$SESSION_LOG_FILE"
+    }
+
     # Bash AI
+
     export PATH=$PATH:/path/to/bash-ai/bin  # replace with actual path
+
     ai() {
-        eval $(bash-ai --session-file "$SESSION_LOG_FILE" "$@")
+        eval $(bash-ai --context-file "$SESSION_LOG_FILE" "$@")
     }
     ```
 
