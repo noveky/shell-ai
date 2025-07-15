@@ -1,9 +1,10 @@
 import asyncio
+import os
 from collections.abc import Callable
 
 import openai
 
-from .config import OPENAI_MODEL, OPENAI_API_KEY, OPENAI_BASE_URL
+from .config import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
 from .models import Event, Message, Ref
 
 

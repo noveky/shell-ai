@@ -1,4 +1,5 @@
 import argparse
+import html
 import re
 import sys
 
@@ -49,7 +50,9 @@ def buffer_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
                 rf"{OPENING_TAG}(.*?){CLOSING_TAG}", buffer.value, re.DOTALL
             ):
                 # Trigger command suggestion
-                command = run_command_match.group(1)
+                command = html.unescape(
+                    run_command_match.group(1)
+                )  # Unescape &lt;, &gt;, etc.
                 buffer.value = (
                     buffer.value[: run_command_match.start()]
                     + styled(command, "light_grey", "underline")
@@ -79,13 +82,15 @@ async def main():
     if context_file:
         try:
             with open(context_file, "r", errors="replace") as f:
-                session_context = strip_ansi(f.read())[-(MAX_CONTEXT_LENGTH or 0) :]
+                session_context = strip_ansi(f.read())
         except:
             pass
 
     # Construct the prompt
     prompt = PROMPT_TEMPLATE.format(
-        session_context=session_context or "No session context provided",
+        session_context=session_context[-(MAX_CONTEXT_LENGTH or 0) :]
+        if session_context is not None
+        else "No session context provided",
         user_message=user_message,
     )
 
