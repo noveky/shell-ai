@@ -7,7 +7,7 @@ from .completion import request_completion
 from .config import MAX_CONTEXT_LENGTH
 from .models import Event, EventType, Ref
 from .prompts import PROMPT_TEMPLATE
-from .utils import ask_yes_no, print_styled, strip_ansi, styled
+from .utils import ask_yes_no, bash_dumps, indent, print_styled, strip_ansi, styled
 
 
 def parse_arguments():
@@ -91,7 +91,7 @@ async def main():
         session_context=session_context[-(MAX_CONTEXT_LENGTH or 0) :]
         if session_context is not None
         else "No session context provided",
-        user_message=user_message,
+        user_message=user_message or "suggest",
     )
 
     # Invoke the LLM API and handle the response
@@ -115,20 +115,16 @@ async def main():
             print(
                 styled(f"\nAI suggests running this command:", "cyan"), file=sys.stderr
             )
-            print(f"  {event.data}", file=sys.stderr)
+            print(indent(event.data, 2), file=sys.stderr)
             if ask_yes_no(styled(f"Approve?", "cyan")):
                 commands_to_run.append(event.data)
 
-    # Notify the user about the commands to be executed
-    if commands_to_run:
-        print_styled(
-            "\nThe following commands will be executed in order:",
-            "cyan",
-            file=sys.stderr,
-        )
-        for i, command in enumerate(commands_to_run, 1):
-            print(f"{i}. {command}", file=sys.stderr)
-        print(file=sys.stderr)
+    # Construct the combined command
+    combined_command = ""
+    for i, command in enumerate(commands_to_run, 1):
+        combined_command += f"printf {bash_dumps(styled(f'\nExecuting approved command ({i}/{len(commands_to_run)}):\n', 'cyan'))};\n"
+        combined_command += f"printf {bash_dumps(indent(command, 2) + '\n')};\n"
+        combined_command += f"{command.strip()};echo;"
 
-    # Write the commands to stdout, which will be executed in bash using `eval`
-    print("; ".join(commands_to_run), file=sys.stdout)
+    # Write the combined command to stdout, which will be executed in bash using `eval`
+    print(combined_command, file=sys.stdout)

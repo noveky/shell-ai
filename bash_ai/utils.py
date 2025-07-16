@@ -1,3 +1,4 @@
+import json
 import re
 import sys
 from typing import Literal
@@ -137,3 +138,13 @@ def ask_yes_no(question: str = "", default: bool | None = None) -> bool:
                 raise ValueError("Invalid input.")
         except Exception as e:
             print_styled(f"Error: {e}", "red", file=sys.stderr)
+
+
+def indent(text: str, size: int, /, *, except_first_line: bool = False) -> str:
+    return ("" if except_first_line else " " * size) + f"\n{' ' * size}".join(
+        text.split("\n")
+    )
+
+
+def bash_dumps(text: str) -> str:
+    return json.dumps(text).replace("$", "\\$")
