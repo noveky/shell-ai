@@ -6,7 +6,7 @@ CONFIG_FILE = os.path.expanduser("~/.config/bash-ai/bash-ai.conf")
 config: dict = tomllib.load(open(CONFIG_FILE, "rb"))
 
 
-OPENAI_BASE_URL = str(config.get("base-url", os.getenv("OPENAI_BASE_URL")) or "")
+OPENAI_BASE_URL = str(config.get("base-url", os.getenv("OPENAI_BASE_URL"))) or None
 OPENAI_API_KEY = str(config.get("api-key", os.getenv("OPENAI_API_KEY")) or "")
 OPENAI_MODEL = str(config.get("model", os.getenv("OPENAI_MODEL")) or "")
 MAX_CONTEXT_LENGTH = config.get("max-context-length", None)

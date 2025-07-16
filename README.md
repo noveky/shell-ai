@@ -10,70 +10,20 @@ An LLM-based smart assistant that integrates with your bash terminal to perform 
     git clone https://github.com/noveky/bash-ai.git
     ```
 
-2.  Create a Python virtual environment and install dependencies:
+2.  Run the installation script:
 
     ```bash
-    cd bash-ai
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
+    chmod +x install.sh
+    ./install.sh
     ```
 
-3.  Add the following content to `~/.bashrc`:
-
-    ```bash
-    # Session logging
-    # initialize session logging with output capture
-    log() {
-        if [[ -z $1 ]]; then
-            echo "Usage: log {start|status|view|clear|stop}"
-        elif [[ $1 == start ]]; then
-            export SESSION_LOG_FILE="/tmp/bash_session_$(date +%Y%m%d_%H%M%S).ansi"
-
-            # redirect all output to both terminal and log file
-            script -fq "$SESSION_LOG_FILE"
-        elif [[ $1 == status ]]; then
-            if [[ -f "$SESSION_LOG_FILE" ]]; then
-                echo "Session logging initialized, file: $SESSION_LOG_FILE"
-            else
-                echo "Session logging not initialized."
-            fi
-        elif [[ $1 == view ]]; then
-            cat "$SESSION_LOG_FILE"
-        elif [[ $1 == clear ]]; then
-            : > "$SESSION_LOG_FILE"
-        elif [[ $1 == stop ]]; then
-            rm -f "$SESSION_LOG_FILE"
-        fi
-    }
-
-    if [[ ! -f "$SESSION_LOG_FILE" && $- == *i* ]]; then
-        log start
-    fi
-    trap 'log stop' EXIT
-
-    # Bash AI
-    export PATH=$PATH:/path/to/bash-ai/bin  # replace with actual path
-    ai() {
-        eval "$(bash-ai --context-file "$SESSION_LOG_FILE" "$@")"
-    }
-    ```
-
-4.  Source the updated `.bashrc` file:
+3.  Source the updated `.bashrc` file:
 
     ```bash
     source ~/.bashrc
     ```
 
-5.  Create the configuration file `~/.config/bash-ai/bash-ai.conf`, and fill in the values:
-
-    ```
-    base-url = "Your OpenAI-compatible API endpoint"
-    api-key = "Your API key"
-    model = "Your preferred model name"
-    ```
-
-6.  Try it out!
+4.  Try it out!
 
     ```
     $ ai Why is my boot time so long

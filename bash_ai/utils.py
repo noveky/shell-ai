@@ -135,7 +135,7 @@ def ask_yes_no(question: str = "", default: bool | None = None) -> bool:
             elif answer == "" and default is not None:
                 return default
             else:
-                raise ValueError("Invalid input.")
+                raise ValueError("Invalid answer.")
         except Exception as e:
             print_styled(f"Error: {e}", "red", file=sys.stderr)
 
