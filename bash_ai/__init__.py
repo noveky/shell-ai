@@ -7,7 +7,7 @@ from .completion import request_completion
 from .config import MAX_CONTEXT_LENGTH
 from .models import Event, EventType, Ref
 from .prompts import PROMPT_TEMPLATE
-from .utils import ask_yes_no, bash_dumps, indent, print_styled, strip_ansi, styled
+from .utils import ask_yes_no, escape_printf, indent, print_styled, strip_ansi, styled
 
 
 def parse_arguments():
@@ -122,9 +122,11 @@ async def main():
     # Construct the combined command
     combined_command = ""
     for i, command in enumerate(commands_to_run, 1):
-        combined_command += f"printf {bash_dumps(styled(f'\nExecuting approved command ({i}/{len(commands_to_run)}):\n', 'cyan'))};\n"
-        combined_command += f"printf {bash_dumps(indent(command, 2) + '\n')};\n"
+        combined_command += f"printf {escape_printf(styled(f'\nExecuting approved command ({i}/{len(commands_to_run)}):\n', 'cyan'))};\n"
+        # combined_command += f"printf {escape_printf(indent(command, 2) + '\n')};\n"
         combined_command += f"{command.strip()};echo;"
+    if commands_to_run:
+        combined_command += f"printf {escape_printf(styled(f'Done.\n', 'cyan'))};\n"
 
     # Write the combined command to stdout, which will be executed in bash using `eval`
     print(combined_command, file=sys.stdout)

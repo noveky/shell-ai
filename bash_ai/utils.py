@@ -146,5 +146,5 @@ def indent(text: str, size: int, /, *, except_first_line: bool = False) -> str:
     )
 
 
-def bash_dumps(text: str) -> str:
-    return json.dumps(text).replace("$", "\\$")
+def escape_printf(text: str) -> str:
+    return json.dumps(text).replace("%", "%%")
