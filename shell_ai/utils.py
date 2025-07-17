@@ -3,6 +3,7 @@ import re
 import sys
 from typing import Literal
 
+
 StyleAttribute = (
     Literal[
         "reset",
@@ -50,7 +51,6 @@ StyleAttribute = (
     ]
     | None
 )
-
 
 _CODE_MAP = {
     "reset": 0,

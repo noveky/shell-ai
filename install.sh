@@ -52,9 +52,10 @@ if [[ ! -f $CONFIG_FILE ]]; then
 
     echo "[*] Writing configuration to $CONFIG_FILE..."
     cat > "$CONFIG_FILE" << CFGEOF
-base-url = "$BASE_URL"
-api-key = "$API_KEY"
-model = "$MODEL"
+[DEFAULT]
+base-url = $BASE_URL
+api-key = $API_KEY
+model = $MODEL
 CFGEOF
 else
     echo "[*] Found configuration file at $CONFIG_FILE."

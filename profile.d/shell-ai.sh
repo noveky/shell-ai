@@ -32,5 +32,5 @@ export PATH="$PATH:$PROJECT_ROOT/bin"
 
 # AI assistant function
 ai() {
-    eval "$(shell-ai --context-file \"$SESSION_LOG_FILE\" \"$@\")"
+    eval "$(shell-ai --context-file "$SESSION_LOG_FILE" "$@")"
 }
