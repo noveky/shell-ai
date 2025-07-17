@@ -28,8 +28,8 @@ Currently the tool only supports bash.
 
 4.  Try it out!
 
-    ```
-    $ ai Why is my boot time so long
+    ```console
+    $ ai Why does my system take so long to boot up?
     To diagnose long boot times, you'll want to analyze the system's boot logs for delays. The tool systemd-analyze and systemd-analyze blame are helpful for this.
 
     systemd-analyze; systemd-analyze blame | head -20; ai proceed
