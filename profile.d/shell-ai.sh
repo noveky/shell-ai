@@ -3,7 +3,8 @@ log() {
     if [[ -z $1 ]]; then
         echo "Usage: log {start|status|view|clear|stop}"
     elif [[ $1 == start ]]; then
-        export SESSION_LOG_FILE="/tmp/bash_session_$(date +%Y%m%d_%H%M%S).ansi"
+        export SESSION_LOG_FILE="/tmp/shell-session-logs/$(date +%Y%m%d_%H%M%S).ansi"
+        mkdir -p $(dirname "$SESSION_LOG_FILE")
         script -fq "$SESSION_LOG_FILE"
     elif [[ $1 == status ]]; then
         if [[ -f "$SESSION_LOG_FILE" ]]; then
@@ -24,12 +25,12 @@ if [[ ! -f "$SESSION_LOG_FILE" && $- == *i* ]]; then
 fi
 trap 'log stop' EXIT
 
-# Bash AI integration
-SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+# Shell AI integration
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 PROJECT_ROOT="$(dirname $SCRIPT_DIR)"
 export PATH="$PATH:$PROJECT_ROOT/bin"
 
 # AI assistant function
 ai() {
-    eval "$(bash-ai --context-file \"$SESSION_LOG_FILE\" \"$@\")"
+    eval "$(shell-ai --context-file \"$SESSION_LOG_FILE\" \"$@\")"
 }

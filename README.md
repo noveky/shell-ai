@@ -1,13 +1,15 @@
-# Bash AI Assistant
+# Shell AI Assistant
 
-An LLM-based smart assistant that integrates with your bash terminal to perform context-aware command execution and provide answers to general questions.
+An LLM-based smart assistant that integrates with your shell to perform context-aware command execution and provide answers to general questions.
+
+Currently the tool only supports bash.
 
 ## Getting Started
 
 1.  Clone this repository:
 
     ```bash
-    git clone https://github.com/noveky/bash-ai.git
+    git clone https://github.com/noveky/shell-ai.git
     ```
 
 2.  Run the installation script:
@@ -17,7 +19,7 @@ An LLM-based smart assistant that integrates with your bash terminal to perform 
     ./install.sh
     ```
 
-3.  Source the updated `.bashrc` file:
+3.  Start a new shell session, or manually source the updated .bashrc file:
 
     ```bash
     source ~/.bashrc

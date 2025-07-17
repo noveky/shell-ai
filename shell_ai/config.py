@@ -2,7 +2,7 @@ import os
 import tomllib
 
 
-CONFIG_FILE = os.path.expanduser("~/.config/bash-ai/bash-ai.conf")
+CONFIG_FILE = os.path.expanduser("~/.config/shell-ai/shell-ai.conf")
 config: dict = tomllib.load(open(CONFIG_FILE, "rb"))
 
 

@@ -12,7 +12,7 @@ from .utils import ask_yes_no, escape_printf, indent, print_styled, strip_ansi, 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        prog="bash-ai", formatter_class=argparse.RawDescriptionHelpFormatter
+        prog="shell-ai", formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     parser.add_argument("--context-file", type=str, help="Path to the context file")
@@ -77,7 +77,7 @@ def stop_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
 async def main():
     context_file, user_message = parse_arguments()
 
-    # Read the bash session context if context file is provided
+    # Read the shell session context if context file is provided
     session_context = None
     if context_file:
         try:
@@ -128,5 +128,5 @@ async def main():
     if commands_to_run:
         combined_command += f"printf {escape_printf(styled(f'Done.\n', 'cyan'))};\n"
 
-    # Write the combined command to stdout, which will be executed in bash using `eval`
+    # Write the combined command to stdout, which will be executed in shell using `eval`
     print(combined_command, file=sys.stdout)

@@ -1,14 +1,25 @@
-#!/bin/bash
 set -e
 
+echo "[*] Detecting user home..."
 if [[ -n "$SUDO_USER" ]]; then
   USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
 else
   USER_HOME="$HOME"
 fi
 
+echo "[*] Detecting shell type..."
+SHELL_NAME=$(basename "$SHELL")
+if [[ "$SHELL_NAME" == "bash" ]]; then
+    RC_FILE="$USER_HOME/.bashrc"
+else
+    echo "Error: Unsupported shell type $SHELL_NAME"
+    exit 1
+fi
+RC_NAME=$(basename "$RC_FILE")
+
 echo "[*] Detecting project root..."
-PROJECT_ROOT="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+PROJECT_ROOT="$SCRIPT_DIR"
 
 echo "[*] Checking for Python virtual environment..."
 if [ ! -d "$PROJECT_ROOT/.venv" ]; then
@@ -23,12 +34,12 @@ else
     echo "Warning: pip not found in Python virtual environment. You need to install pip and required packages manually."
 fi
 
-echo "[*] Configuring .bashrc..."
-BASHRC_LINE="source $PROJECT_ROOT/profile.d/bash-ai.sh"
-grep -Fxq "$BASHRC_LINE" "$USER_HOME/.bashrc" || echo -e "\n# Bash AI\n$BASHRC_LINE" >> "$USER_HOME/.bashrc"
+echo "[*] Configuring $RC_NAME..."
+RC_LINE="source $PROJECT_ROOT/profile.d/shell-ai.sh"
+grep -Fxq "$RC_LINE" "$RC_FILE" || echo -e "\n# Shell AI\n$RC_LINE" >> "$RC_FILE"
 
-CONFIG_DIR="$USER_HOME/.config/bash-ai"
-CONFIG_FILE="$CONFIG_DIR/bash-ai.conf"
+CONFIG_DIR="$USER_HOME/.config/shell-ai"
+CONFIG_FILE="$CONFIG_DIR/shell-ai.conf"
 echo "[*] Creating configuration directory at $CONFIG_DIR..."
 mkdir -p "$CONFIG_DIR"
 
@@ -45,12 +56,8 @@ base-url = "$BASE_URL"
 api-key = "$API_KEY"
 model = "$MODEL"
 CFGEOF
-    echo "[*] Configuration written to $CONFIG_FILE."
 else
-    echo "Found configuration file at $CONFIG_FILE."
+    echo "[*] Found configuration file at $CONFIG_FILE."
 fi
-
-echo "[*] Sourcing .bashrc..."
-source "$USER_HOME/.bashrc"
 
 echo "[*] Installation complete."
