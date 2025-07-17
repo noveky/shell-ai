@@ -16,7 +16,7 @@ def parse_arguments():
     )
 
     parser.add_argument("--context-file", type=str, help="Path to the context file")
-    parser.add_argument("message", nargs="*", help="User message to the AI")
+    parser.add_argument("--message", type=str, help="User message to the AI")
 
     args = parser.parse_args()
 

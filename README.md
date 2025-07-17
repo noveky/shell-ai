@@ -15,6 +15,7 @@ Currently the tool only supports bash.
 2.  Run the installation script:
 
     ```bash
+    cd shell-ai/
     chmod +x install.sh
     ./install.sh
     ```
