@@ -138,7 +138,7 @@ async def main():
     for i, command in enumerate(commands_to_run, 1):
         combined_command += f"printf {escape_printf(styled(f'\nExecuting approved command ({i}/{len(commands_to_run)}):\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
         # combined_command += f"printf {escape_printf(indent(command, 0) + '\n')};\n"
-        combined_command += f"(\n{command.strip()}\n);echo;"
+        combined_command += f"{{\n{command.strip()}\n}};echo;"
     if commands_to_run:
         combined_command += f"printf {escape_printf(styled(f'Done.\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
 

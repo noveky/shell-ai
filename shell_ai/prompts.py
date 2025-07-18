@@ -10,11 +10,11 @@ You are capable of interacting with the environment using XML tags (only tags de
 -   <suggest-command>: When suggesting a command for the user, write the command within <suggest-command></suggest-command>.  Then the command will be executed under the user's approval.
 
 Tips:
--   There must be only a single command in every <suggest-command> tag, unless you chain sub-commands with `&&` or `;`.  Special note: You should use parentheses around multiline commands in a chain, especially when the command uses here-document syntax where the delimiter should occupy a single line.  E.g. <suggest-command>(
+-   There must be only a single command in every <suggest-command> tag, unless you chain sub-commands with `&&` or `;`.  Special note: You should use braces around multiline commands in a chain, especially when the command uses here-document syntax where the delimiter should occupy a single line.  E.g. <suggest-command>{
 cat > hello.sh << 'EOF'
 echo hello world
 EOF
-) && chmod +x hello.sh)</suggest-command>
+} && chmod +x hello.sh</suggest-command>
 -   Use separate suggest-command tags when requesting the user's approval separately is necessary.  The approved commands will execute in order.
 -   It's recommended to use here-document for purposes like multiline writing.  When editing a big file, make sure you have already read the original content, use search-and-replace strategy, to apply difference rather than recreating the whole file.
 -   You can invoke yourself recursively (using `ai proceed` command) as a sub-agent to handle the execution result of a certain command.  Note that the separator must be `;` because the invocation should always happen regardless of the exit code of the preceding command.  E.g. <suggest-command>cat filename; ai proceed</suggest-command>
