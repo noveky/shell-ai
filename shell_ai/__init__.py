@@ -1,5 +1,6 @@
 import argparse
 import html
+import os
 import re
 import sys
 
@@ -14,17 +15,32 @@ PRIMARY_COLOR = (38, 2, 255, 99, 132)
 SECONDARY_COLOR = (38, 2, 255, 159, 64)
 
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(
-        prog="shell-ai", formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+agent_id = None
+agent_signal_file = None
 
-    parser.add_argument("--context-file", type=str, help="Path to the context file")
-    parser.add_argument("--message", type=str, help="User message to the AI")
 
-    args = parser.parse_args()
+def init_agent():
+    """Initialize the agent by creating a unique signal file."""
 
-    return args.context_file, " ".join(args.message)
+    global agent_id, agent_signal_file
+    SIGNAL_DIR = "/dev/shm/shell-ai-signals"
+    os.makedirs(SIGNAL_DIR, exist_ok=True)
+    existing_ids = []
+    for fname in os.listdir(SIGNAL_DIR):
+        try:
+            existing_ids.append(int(fname))
+        except ValueError:
+            continue
+    next_id = (max(existing_ids) + 1) if existing_ids else 1
+    agent_id = next_id
+    agent_signal_file = os.path.join(SIGNAL_DIR, str(agent_id))
+    # Touch the file to mark this agent's presence
+    with open(agent_signal_file, "w") as f:
+        f.write(str(agent_id))
+
+
+def agent_name():
+    return f"Agent {agent_id}" if agent_id is not None else "AI"
 
 
 def flush_buffer(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
@@ -59,7 +75,7 @@ def buffer_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
                 )  # Unescape &lt;, &gt;, etc.
                 buffer.value = (
                     buffer.value[: run_command_match.start()]
-                    + styled(command, "bold", code_tuple=SECONDARY_COLOR)
+                    + command
                     + buffer.value[run_command_match.end() :]
                 )
                 event_queue.append(Event(EventType.SUGGEST_COMMAND, command))
@@ -72,7 +88,7 @@ def buffer_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
 
 
 def start_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
-    print_styled("AI:", "bold", code_tuple=PRIMARY_COLOR, file=sys.stderr)
+    print_styled(f"{agent_name()}:", "bold", code_tuple=PRIMARY_COLOR, file=sys.stderr)
 
 
 def stop_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
@@ -80,6 +96,19 @@ def stop_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
 
     # Print an extra newline
     print(file=sys.stderr)
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        prog="shell-ai", formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument("--context-file", type=str, help="Path to the context file")
+    parser.add_argument("--message", type=str, help="User message to the AI")
+
+    args = parser.parse_args()
+
+    return args.context_file, " ".join(args.message)
 
 
 async def main():
@@ -94,8 +123,12 @@ async def main():
         except:
             pass
 
+    # Initialize the agent
+    init_agent()
+
     # Construct the prompt
     prompt = PROMPT_TEMPLATE.format(
+        agent_id=agent_id if agent_id is not None else "none",
         session_context=session_context[-(MAX_CONTEXT_LENGTH or 0) :]
         if session_context is not None
         else "No session context provided",
@@ -123,24 +156,35 @@ async def main():
             # Ask the user for confirmation before running the command
             print(
                 styled(
-                    f"\nAI suggests running this command:",
+                    f"\n{agent_name()} suggests running this command:",
                     "bold",
                     code_tuple=PRIMARY_COLOR,
                 ),
                 file=sys.stderr,
             )
-            print(indent(event.data, 0), file=sys.stderr)
+            print_styled(
+                indent(event.data, 0),
+                "bold",
+                code_tuple=SECONDARY_COLOR,
+                file=sys.stderr,
+            )
             if ask_yes_no(styled(f"Approve?", "bold", code_tuple=PRIMARY_COLOR)):
                 commands_to_run.append(event.data)
 
     # Construct the combined command
     combined_command = ""
     for i, command in enumerate(commands_to_run, 1):
-        combined_command += f"printf {escape_printf(styled(f'\nExecuting approved command ({i}/{len(commands_to_run)}):\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
+        combined_command += f"printf {escape_printf(styled(f'\n{agent_name()} is executing approved command ({i}/{len(commands_to_run)}):\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
         # combined_command += f"printf {escape_printf(indent(command, 0) + '\n')};\n"
         combined_command += f"{{\n{command.strip()}\n}};echo;"
     if commands_to_run:
-        combined_command += f"printf {escape_printf(styled(f'Done.\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
+        combined_command += f"printf {escape_printf(styled(f'{agent_name()} done.\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
+    # Kill the agent after execution
+    combined_command += f"rm -f {agent_signal_file};\n"
 
     # Write the combined command to stdout, which will be executed in shell using `eval`
     print(combined_command, file=sys.stdout)
+
+
+def cleanup():
+    pass

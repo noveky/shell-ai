@@ -5,10 +5,12 @@ from .utils import print_styled
 
 
 if __name__ == "__main__":
-    from . import main
+    from . import main, cleanup
 
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
         print_styled("\nProcess interrupted by user.", "yellow", file=sys.stderr)
         sys.exit(0)
+    finally:
+        cleanup()
