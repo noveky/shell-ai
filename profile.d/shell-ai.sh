@@ -20,7 +20,7 @@ log() {
         rm -f "$SESSION_LOG_FILE"
     fi
 }
-PROMPT_COMMAND="if [[ $- == *i* ]]; then if [[ -f "$SESSION_LOG_FILE" ]]; then echo -ne '\033[38;5;208m✱\033[0m '; fi; fi; $PROMPT_COMMAND"
+PROMPT_COMMAND="if [[ $- == *i* ]]; then if [[ -f "$SESSION_LOG_FILE" ]]; then echo -ne '\e[38;2;255;99;132m✱\033[0m '; fi; fi; $PROMPT_COMMAND"
 if [[ ! -f "$SESSION_LOG_FILE" && $- == *i* ]]; then
     log start
 fi
@@ -30,8 +30,9 @@ trap 'log stop' EXIT
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 PROJECT_ROOT="$(dirname $SCRIPT_DIR)"
 export PATH="$PATH:$PROJECT_ROOT/bin"
-
-# AI assistant function
+ai-agent() {
+    eval "$(shell-ai --agent-name "$1" --context-file "$SESSION_LOG_FILE" --message "$2")"
+}
 ai() {
-    eval "$(shell-ai --context-file "$SESSION_LOG_FILE" --message "$*")"
+    ai-agent "" "$*"
 }
