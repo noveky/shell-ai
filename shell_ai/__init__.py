@@ -10,6 +10,10 @@ from .prompts import PROMPT_TEMPLATE
 from .utils import ask_yes_no, escape_printf, indent, print_styled, strip_ansi, styled
 
 
+PRIMARY_COLOR = (38, 2, 255, 99, 132)
+SECONDARY_COLOR = (38, 2, 255, 159, 64)
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(
         prog="shell-ai", formatter_class=argparse.RawDescriptionHelpFormatter
@@ -27,7 +31,7 @@ def flush_buffer(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
     """Print the buffer contents to stderr and clear it."""
 
     if buffer.value:
-        print_styled(buffer.value, "light_grey", end="", flush=True, file=sys.stderr)
+        print_styled(buffer.value, end="", flush=True, file=sys.stderr)
         acc.value += buffer.value
         buffer.value = ""
 
@@ -55,7 +59,7 @@ def buffer_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
                 )  # Unescape &lt;, &gt;, etc.
                 buffer.value = (
                     buffer.value[: run_command_match.start()]
-                    + styled(command, "light_grey", "underline")
+                    + styled(command, "bold", code_tuple=SECONDARY_COLOR)
                     + buffer.value[run_command_match.end() :]
                 )
                 event_queue.append(Event(EventType.SUGGEST_COMMAND, command))
@@ -65,6 +69,10 @@ def buffer_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
                 break
     else:
         flush_buffer(buffer, acc, event_queue)
+
+
+def start_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
+    print_styled("AI:", "bold", code_tuple=PRIMARY_COLOR, file=sys.stderr)
 
 
 def stop_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
@@ -101,6 +109,7 @@ async def main():
             [{"role": "user", "content": prompt}],
             event_queue=event_queue,
             buffer_handler=buffer_handler,
+            start_handler=start_handler,
             stop_handler=stop_handler,
         )
     except Exception as e:
@@ -113,20 +122,25 @@ async def main():
         if event.type == EventType.SUGGEST_COMMAND:
             # Ask the user for confirmation before running the command
             print(
-                styled(f"\nAI suggests running this command:", "cyan"), file=sys.stderr
+                styled(
+                    f"\nAI suggests running this command:",
+                    "bold",
+                    code_tuple=PRIMARY_COLOR,
+                ),
+                file=sys.stderr,
             )
-            print(indent(event.data, 2), file=sys.stderr)
-            if ask_yes_no(styled(f"Approve?", "cyan")):
+            print(indent(event.data, 0), file=sys.stderr)
+            if ask_yes_no(styled(f"Approve?", "bold", code_tuple=PRIMARY_COLOR)):
                 commands_to_run.append(event.data)
 
     # Construct the combined command
     combined_command = ""
     for i, command in enumerate(commands_to_run, 1):
-        combined_command += f"printf {escape_printf(styled(f'\nExecuting approved command ({i}/{len(commands_to_run)}):\n', 'cyan'))};\n"
-        # combined_command += f"printf {escape_printf(indent(command, 2) + '\n')};\n"
+        combined_command += f"printf {escape_printf(styled(f'\nExecuting approved command ({i}/{len(commands_to_run)}):\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
+        # combined_command += f"printf {escape_printf(indent(command, 0) + '\n')};\n"
         combined_command += f"(\n{command.strip()}\n);echo;"
     if commands_to_run:
-        combined_command += f"printf {escape_printf(styled(f'Done.\n', 'cyan'))};\n"
+        combined_command += f"printf {escape_printf(styled(f'Done.\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
 
     # Write the combined command to stdout, which will be executed in shell using `eval`
     print(combined_command, file=sys.stdout)

@@ -20,6 +20,7 @@ log() {
         rm -f "$SESSION_LOG_FILE"
     fi
 }
+PROMPT_COMMAND="if [[ $- == *i* ]]; then if [[ -f "$SESSION_LOG_FILE" ]]; then echo -ne '\033[38;5;208m✱\033[0m '; fi; fi; $PROMPT_COMMAND"
 if [[ ! -f "$SESSION_LOG_FILE" && $- == *i* ]]; then
     log start
 fi

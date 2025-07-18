@@ -98,8 +98,13 @@ _CODE_MAP = {
 }
 
 
-def styled(text: object, *attrs: StyleAttribute) -> str:
+def styled(
+    text: object, *attrs: StyleAttribute, code_tuple: tuple[int, ...] | None = None
+) -> str:
     result = str(text)
+
+    if code_tuple:
+        result = "\033[%sm%s" % (";".join(str(n) for n in code_tuple), result)
 
     for attr in reversed(attrs):
         if attr is None:
@@ -111,8 +116,13 @@ def styled(text: object, *attrs: StyleAttribute) -> str:
     return result
 
 
-def print_styled(text: object, *attrs: StyleAttribute, **kwargs):
-    print(styled(text, *attrs), **kwargs)
+def print_styled(
+    text: object,
+    *attrs: StyleAttribute,
+    code_tuple: tuple[int, ...] | None = None,
+    **kwargs,
+):
+    print(styled(text, *attrs, code_tuple=code_tuple), **kwargs)
 
 
 def strip_ansi(ansi_string: str) -> str:
