@@ -91,7 +91,7 @@ async def main():
         session_context=session_context[-(MAX_CONTEXT_LENGTH or 0) :]
         if session_context is not None
         else "No session context provided",
-        user_message=user_message or "suggest",
+        user_message=user_message or "proceed",
     )
 
     # Invoke the LLM API and handle the response
@@ -124,7 +124,7 @@ async def main():
     for i, command in enumerate(commands_to_run, 1):
         combined_command += f"printf {escape_printf(styled(f'\nExecuting approved command ({i}/{len(commands_to_run)}):\n', 'cyan'))};\n"
         # combined_command += f"printf {escape_printf(indent(command, 2) + '\n')};\n"
-        combined_command += f"{command.strip()};echo;"
+        combined_command += f"(\n{command.strip()}\n);echo;"
     if commands_to_run:
         combined_command += f"printf {escape_printf(styled(f'Done.\n', 'cyan'))};\n"
 
