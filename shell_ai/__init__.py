@@ -74,8 +74,9 @@ def start_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
 def stop_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
     flush_buffer(buffer, acc, event_queue)
 
-    # Print an extra newline
-    print(file=sys.stderr)
+    if not acc.value.endswith("\n"):
+        # Print a final newline
+        print(file=sys.stderr)
 
 
 def parse_arguments():
@@ -115,7 +116,7 @@ async def main():
         is_top_level_agent=not agent_name,
         session_context=session_context[-(MAX_CONTEXT_LENGTH or 0) :]
         if session_context is not None
-        else "No session context provided",
+        else "Failed to acquire context",
         message=message,
     )
 
@@ -163,13 +164,14 @@ async def main():
         if proceed_pattern.search(command):
             has_proceed = True
         command = proceed_pattern.sub(
-            f'ai-agent "{agent_display_name()}" proceed {message}', command
+            f"ai-agent {agent_display_name()} proceed {message}", command
         )
-        combined_command += f"printf {escape_printf(styled(f'\n{agent_display_name()} is executing approved command ({i}/{len(commands_to_run)}):\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
-        # combined_command += f"printf {escape_printf(indent(command, 0) + '\n')};\n"
-        combined_command += f"{{\n{command.strip()}\n}};echo;"
+        combined_command += f"printf {escape_printf(styled(f'\n{agent_display_name()} is executing approved command ({i}/{len(commands_to_run)}):', 'bold', code_tuple=PRIMARY_COLOR))};\n"
+        combined_command += f"printf {escape_printf('\n')};\n"
+        # combined_command += f"printf {escape_printf('\n' + indent(command, 0))};\n"
+        combined_command += f"{{\n{command.strip()}\n}};"
     if commands_to_run and not has_proceed:
-        combined_command += f"printf {escape_printf(styled(f'{agent_display_name()} done.\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
+        combined_command += f"printf {escape_printf(styled(f'\n{agent_display_name()} done.\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
 
     # Write the combined command to stdout, which will be executed in shell using `eval`
     print(combined_command, file=sys.stdout)

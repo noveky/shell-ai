@@ -1,7 +1,7 @@
 # Session logging
 log() {
     if [[ -z $1 ]]; then
-        echo "Usage: log {start|status|view|clear|stop}"
+        echo "Usage: log {start|status|file|view|clear|stop}"
     elif [[ $1 == start ]]; then
         export SESSION_LOG_FILE="/tmp/shell-session-logs/$(date +%Y%m%d_%H%M%S)"
         mkdir -p $(dirname "$SESSION_LOG_FILE")
@@ -12,19 +12,30 @@ log() {
         else
             echo "Session logging not initialized."
         fi
+    elif [[ $1 == file ]]; then
+        echo "$SESSION_LOG_FILE"
     elif [[ $1 == view ]]; then
-        cat "$SESSION_LOG_FILE"
+        cat -e "$SESSION_LOG_FILE"
+        echo ""
     elif [[ $1 == clear ]]; then
         : >"$SESSION_LOG_FILE"
     elif [[ $1 == stop ]]; then
         rm -f "$SESSION_LOG_FILE"
     fi
 }
-PROMPT_COMMAND="if [[ $- == *i* ]]; then if [[ -f "$SESSION_LOG_FILE" ]]; then echo -ne '\e[38;2;255;99;132m✱\033[0m '; fi; fi; $PROMPT_COMMAND"
 if [[ ! -f "$SESSION_LOG_FILE" && $- == *i* ]]; then
     log start
 fi
 trap 'log stop' EXIT
+
+# Logging indicator
+PROMPT_COMMAND="if [[ $- == *i* ]]; then if [[ -f "$SESSION_LOG_FILE" ]]; then echo -ne '\e[38;2;255;99;132m✱\033[0m '; fi; fi; $PROMPT_COMMAND"
+
+# Override clear command
+clear() {
+    log clear
+    command clear
+}
 
 # Shell AI integration
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
