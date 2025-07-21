@@ -29,7 +29,11 @@ fi
 trap 'log stop' EXIT
 
 # Logging indicator
-PROMPT_COMMAND="if [[ $- == *i* ]]; then if [[ -f "$SESSION_LOG_FILE" ]]; then echo -ne '\e[38;2;255;99;132m✱\033[0m '; fi; fi; $PROMPT_COMMAND"
+if [[ $- == *i* ]]; then
+    if [[ -f "$SESSION_LOG_FILE" ]]; then
+        PS1="\[\e[38;2;255;99;132m\]✱\[\e[0m\] $PS1"
+    fi
+fi
 
 # Override clear command
 clear() {
