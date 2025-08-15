@@ -45,6 +45,10 @@ TOP_LEVEL_TIPS = """-   You are the top-level agent, so it's recommended to depl
 def construct_prompt(**kwargs):
     message: str = kwargs["message"]
     is_top_level_agent: bool = kwargs["is_top_level_agent"]
+    raw_mode = kwargs.get("raw_mode", False)
+
+    if raw_mode:
+        return message
 
     if is_top_level_agent:
         kwargs["agent_name"] += " (top level)"

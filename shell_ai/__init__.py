@@ -3,6 +3,7 @@ import html
 import os
 import re
 import sys
+from typing import TextIO
 
 from .completion import request_completion
 from .config import MAX_CONTEXT_LENGTH
@@ -21,17 +22,25 @@ def agent_display_name():
     return agent_name or "AI"
 
 
-def flush_buffer(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
+def flush_buffer(
+    buffer: Ref[str], acc: Ref[str], event_queue: list[Event], *, file: TextIO
+):
     """Print the buffer contents to stderr and clear it."""
 
     if buffer.value:
-        print_styled(buffer.value, end="", flush=True, file=sys.stderr)
+        print_styled(buffer.value, end="", flush=True, file=file)
         acc.value += buffer.value
         buffer.value = ""
 
 
-def buffer_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
+def buffer_handler(
+    buffer: Ref[str], acc: Ref[str], event_queue: list[Event], *, print_mode: bool
+):
     """Handle the response stream buffer."""
+
+    if print_mode:
+        flush_buffer(buffer, acc, event_queue, file=sys.stdout)
+        return
 
     OPENING_TAG = "<suggest-command>"
     CLOSING_TAG = "</suggest-command>"
@@ -62,21 +71,31 @@ def buffer_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
             if not changed:
                 break
     else:
-        flush_buffer(buffer, acc, event_queue)
+        flush_buffer(buffer, acc, event_queue, file=sys.stderr)
 
 
-def start_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
-    print_styled(
-        f"{agent_display_name()}:", "bold", code_tuple=PRIMARY_COLOR, file=sys.stderr
+def start_handler(
+    buffer: Ref[str], acc: Ref[str], event_queue: list[Event], *, print_mode: bool
+):
+    if not print_mode:
+        print_styled(
+            f"{agent_display_name()}:",
+            "bold",
+            code_tuple=PRIMARY_COLOR,
+            file=sys.stderr,
+        )
+
+
+def stop_handler(
+    buffer: Ref[str], acc: Ref[str], event_queue: list[Event], *, print_mode: bool
+):
+    flush_buffer(
+        buffer, acc, event_queue, file=sys.stdout if print_mode else sys.stderr
     )
-
-
-def stop_handler(buffer: Ref[str], acc: Ref[str], event_queue: list[Event]):
-    flush_buffer(buffer, acc, event_queue)
 
     if not acc.value.endswith("\n"):
         # Print a final newline
-        print(file=sys.stderr)
+        print(file=sys.stdout if print_mode else sys.stderr)
 
 
 def parse_arguments():
@@ -87,19 +106,25 @@ def parse_arguments():
     parser.add_argument("--agent-name", type=str, help="Agent name for the AI")
     parser.add_argument("--context-file", type=str, help="Path to the context file")
     parser.add_argument("--message", type=str, help="Message to the AI")
+    parser.add_argument(
+        "--print", action="store_true", help="Print response directly to stdout"
+    )
+    parser.add_argument("--raw", action="store_true", help="Raw prompt mode")
 
     args = parser.parse_args()
 
     return (
-        str(args.agent_name),
+        str(args.agent_name or ""),
         str(args.context_file) if args.context_file is not None else None,
         args.message,
+        args.print,
+        args.raw,
     )
 
 
 async def main():
     global agent_name
-    agent_name, context_file, message = parse_arguments()
+    agent_name, context_file, message, print_mode, raw_mode = parse_arguments()
 
     # Read the shell session context if context file is provided
     session_context = None
@@ -118,6 +143,7 @@ async def main():
         if session_context is not None
         else "Failed to acquire context",
         message=message,
+        raw_mode=raw_mode,
     )
 
     # Invoke the LLM API and handle the response
@@ -126,9 +152,9 @@ async def main():
         await request_completion(
             [{"role": "user", "content": prompt}],
             event_queue=event_queue,
-            buffer_handler=buffer_handler,
-            start_handler=start_handler,
-            stop_handler=stop_handler,
+            buffer_handler=lambda *args: buffer_handler(*args, print_mode=print_mode),
+            start_handler=lambda *args: start_handler(*args, print_mode=print_mode),
+            stop_handler=lambda *args: stop_handler(*args, print_mode=print_mode),
         )
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
@@ -138,22 +164,26 @@ async def main():
     commands_to_run: list[str] = []
     for event in event_queue:
         if event.type == EventType.SUGGEST_COMMAND:
-            # Ask the user for confirmation before running the command
-            print(
-                styled(
-                    f"\n{agent_display_name()} suggests running this command:",
+            if not print_mode:
+                # Ask the user for confirmation before running the command
+                print(
+                    styled(
+                        f"\n{agent_display_name()} suggests running this command:",
+                        "bold",
+                        code_tuple=PRIMARY_COLOR,
+                    ),
+                    file=sys.stderr,
+                )
+                print_styled(
+                    indent(event.data, 0),
                     "bold",
-                    code_tuple=PRIMARY_COLOR,
-                ),
-                file=sys.stderr,
-            )
-            print_styled(
-                indent(event.data, 0),
-                "bold",
-                code_tuple=SECONDARY_COLOR,
-                file=sys.stderr,
-            )
-            if ask_yes_no(styled("Approve?", "bold", code_tuple=PRIMARY_COLOR)):
+                    code_tuple=SECONDARY_COLOR,
+                    file=sys.stderr,
+                )
+            if (
+                print_mode  # Approve without asking, since it will not execute anyway
+                or ask_yes_no(styled("Approve?", "bold", code_tuple=PRIMARY_COLOR))
+            ):
                 commands_to_run.append(event.data)
 
     # Construct the combined command
@@ -173,8 +203,11 @@ async def main():
     if commands_to_run and not has_proceed:
         combined_command += f"printf {escape_printf(styled(f'\n{agent_display_name()} done.\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
 
-    # Write the combined command to stdout, which will be executed in shell using `eval`
-    print(combined_command, file=sys.stdout)
+    if print_mode:
+        pass
+    else:
+        # Write the combined command to stdout, which will be executed in shell using `eval`
+        print(combined_command, file=sys.stdout)
 
 
 def cleanup():
