@@ -103,9 +103,12 @@ def parse_arguments():
         prog="shell-ai", formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
+    parser.add_argument("message", nargs="*", help="Message to the AI")
     parser.add_argument("--agent-name", type=str, help="Agent name for the AI")
     parser.add_argument("--context-file", type=str, help="Path to the context file")
-    parser.add_argument("--message", type=str, help="Message to the AI")
+    parser.add_argument(
+        "--model", type=str, help="Model to use (overrides config file)"
+    )
     parser.add_argument(
         "--print", action="store_true", help="Print response directly to stdout"
     )
@@ -116,7 +119,8 @@ def parse_arguments():
     return (
         str(args.agent_name or ""),
         str(args.context_file) if args.context_file is not None else None,
-        args.message,
+        " ".join(args.message),
+        args.model,
         args.print,
         args.raw,
     )
@@ -124,7 +128,7 @@ def parse_arguments():
 
 async def main():
     global agent_name
-    agent_name, context_file, message, print_mode, raw_mode = parse_arguments()
+    agent_name, context_file, message, model, print_mode, raw_mode = parse_arguments()
 
     # Read the shell session context if context file is provided
     session_context = None
@@ -151,6 +155,7 @@ async def main():
     try:
         await request_completion(
             [{"role": "user", "content": prompt}],
+            model=model,
             event_queue=event_queue,
             buffer_handler=lambda *args: buffer_handler(*args, print_mode=print_mode),
             start_handler=lambda *args: start_handler(*args, print_mode=print_mode),

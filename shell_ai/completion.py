@@ -11,16 +11,16 @@ from .models import Event, Message, Ref
 async def request_completion(
     messages: list,
     *,
+    model: str | None = None,
     event_queue: list[Event] | None = None,
     buffer_handler: Callable[[Ref[str], Ref[str], list[Event]], None] | None = None,
     start_handler: Callable[[Ref[str], Ref[str], list[Event]], None] | None = None,
     stop_handler: Callable[[Ref[str], Ref[str], list[Event]], None] | None = None,
 ) -> Message:
     client = openai.AsyncOpenAI(base_url=OPENAI_BASE_URL, api_key=OPENAI_API_KEY)
-    model = OPENAI_MODEL
 
     response = await client.chat.completions.create(
-        model=model,
+        model=model or OPENAI_MODEL,
         messages=messages,
         stream=True,
     )

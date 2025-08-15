@@ -1,0 +1,4 @@
+#!/bin/bash
+# Wrapper script for the translation tool
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+python3 "$SCRIPT_DIR"/translate.py "$@"
