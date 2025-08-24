@@ -16,7 +16,6 @@ Currently the tool only supports bash.
 
     ```bash
     cd shell-ai/
-    chmod +x install.sh
     ./install.sh
     ```
 

@@ -389,6 +389,34 @@ model = $model"
     run_as_user chmod 600 "$CONFIG_FILE"
 }
 
+install_extensions() {
+    log_step "Installing extensions..."
+
+    EXTENSIONS_DIR="$PROJECT_SOURCE/extensions"
+
+    if [[ ! -d "$EXTENSIONS_DIR" ]]; then
+        log_warn "Extensions directory not found: $EXTENSIONS_DIR"
+        return 0
+    fi
+
+    # Loop over each subdirectory in the extensions directory
+    for extension_dir in "$EXTENSIONS_DIR"/*/; do
+        if [[ -d "$extension_dir" ]]; then
+            extension_name="$(basename "$extension_dir")"
+            install_script="$extension_dir/install.sh"
+            if [[ -f "$install_script" && -x "$install_script" ]]; then
+                log_info "Installing $extension_name..."
+                run_as_user_with_home bash "$install_script" || log_warn "Installation failed for $extension_name"
+            else
+                log_warn "No executable install.sh found in $extension_dir"
+            fi
+        fi
+    done
+
+    log_info "Extensions installation completed successfully"
+}
+
+
 # Main installation function
 main() {
     setup_user_context
@@ -399,6 +427,7 @@ main() {
     setup_venv
     configure_shell
     setup_config
+    install_extensions
 
     echo
     log_info "🎉 Installation completed successfully!"
