@@ -2,10 +2,21 @@ import asyncio
 import os
 from collections.abc import Callable
 
+import httpx
 import openai
 
 from .config import OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
 from .models import Event, Message, Ref
+
+
+def _create_http_client():
+    proxy = (
+        os.environ.get("http_proxy")
+        or os.environ.get("HTTP_PROXY")
+        or os.environ.get("https_proxy")
+        or os.environ.get("HTTPS_PROXY")
+    )
+    return httpx.AsyncClient(proxy=proxy) if proxy else None
 
 
 async def request_completion(
@@ -17,7 +28,13 @@ async def request_completion(
     start_handler: Callable[[Ref[str], Ref[str], list[Event]], None] | None = None,
     stop_handler: Callable[[Ref[str], Ref[str], list[Event]], None] | None = None,
 ) -> Message:
-    client = openai.AsyncOpenAI(base_url=OPENAI_BASE_URL, api_key=OPENAI_API_KEY)
+    http_client = _create_http_client()
+
+    client = openai.AsyncOpenAI(
+        base_url=OPENAI_BASE_URL,
+        api_key=OPENAI_API_KEY,
+        http_client=http_client,
+    )
 
     response = await client.chat.completions.create(
         model=model or OPENAI_MODEL,
@@ -56,5 +73,9 @@ async def request_completion(
 
     if stop_handler:
         stop_handler(buffer, acc, event_queue if event_queue is not None else [])
+
+    # Clean up http client
+    if http_client:
+        await http_client.aclose()
 
     return {"role": "assistant", "content": acc.value}

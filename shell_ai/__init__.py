@@ -1,6 +1,5 @@
 import argparse
 import html
-import os
 import re
 import sys
 from typing import TextIO

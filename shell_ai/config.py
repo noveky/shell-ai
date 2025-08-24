@@ -1,6 +1,5 @@
 import os
 import configparser
-import sys
 
 
 CONFIG_FILE = os.path.expanduser("~/.config/shell-ai/shell-ai.conf")
