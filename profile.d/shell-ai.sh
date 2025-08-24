@@ -5,7 +5,7 @@ log() {
     elif [[ $1 == start ]]; then
         export SESSION_LOG_FILE="/tmp/shell-session-logs/$(date +%Y%m%d_%H%M%S)"
         mkdir -p $(dirname "$SESSION_LOG_FILE")
-        script -fq "$SESSION_LOG_FILE"
+        exec script -fq "$SESSION_LOG_FILE"
     elif [[ $1 == status ]]; then
         if [[ -f "$SESSION_LOG_FILE" ]]; then
             echo "Session logging initialized, file: $SESSION_LOG_FILE"
@@ -14,6 +14,8 @@ log() {
         fi
     elif [[ $1 == file ]]; then
         echo "$SESSION_LOG_FILE"
+    elif [[ $1 == list ]]; then
+        ls -lA "$(dirname "$SESSION_LOG_FILE")"
     elif [[ $1 == view ]]; then
         cat -e "$SESSION_LOG_FILE"
         echo ""
