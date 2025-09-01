@@ -35,7 +35,6 @@ setup_user_context() {
             # Running with sudo
             TARGET_USER="$SUDO_USER"
             TARGET_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-            TARGET_SHELL=$(getent passwd "$SUDO_USER" | cut -d: -f7)
             log_info "Installing for sudo user: $SUDO_USER"
         else
             # Running as root directly
@@ -48,14 +47,12 @@ setup_user_context() {
             fi
             TARGET_USER="root"
             TARGET_HOME="/root"
-            TARGET_SHELL="$SHELL"
             log_info "Installing for root user"
         fi
     else
         # Running as regular user
         TARGET_USER="$USER"
         TARGET_HOME="$HOME"
-        TARGET_SHELL="$SHELL"
         log_info "Installing for current user: $USER"
     fi
 
@@ -154,20 +151,9 @@ check_python() {
 detect_shell() {
     log_step "Detecting shell configuration..."
 
-    SHELL_NAME=$(basename "$TARGET_SHELL")
+    RC_FILE="$TARGET_HOME/.bashrc"
 
-    case "$SHELL_NAME" in
-    bash)
-        RC_FILE="$TARGET_HOME/.bashrc"
-        ;;
-    *)
-        log_error "Unsupported shell: $SHELL_NAME"
-        log_info "Supported shells: bash"
-        return 1
-        ;;
-    esac
-
-    log_info "Shell: $SHELL_NAME"
+    log_info "Shell: bash"
     log_info "RC file: $RC_FILE"
 }
 
