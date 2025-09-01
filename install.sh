@@ -378,7 +378,7 @@ model = $model"
 install_extensions() {
     log_step "Installing extensions..."
 
-    EXTENSIONS_DIR="$PROJECT_SOURCE/extensions"
+    EXTENSIONS_DIR="$INSTALL_DIR/extensions"
 
     if [[ ! -d "$EXTENSIONS_DIR" ]]; then
         log_warn "Extensions directory not found: $EXTENSIONS_DIR"
