@@ -11,12 +11,17 @@ from .models import Event, Message, Ref
 
 def _create_http_client():
     proxy = (
-        os.environ.get("http_proxy")
+        os.environ.get("all_proxy")
+        or os.environ.get("http_proxy")
         or os.environ.get("HTTP_PROXY")
         or os.environ.get("https_proxy")
         or os.environ.get("HTTPS_PROXY")
     )
-    return httpx.AsyncClient(proxy=proxy) if proxy else None
+    return (
+        httpx.AsyncClient(proxy=proxy.replace("socks://", "socks5://"))
+        if proxy
+        else None
+    )
 
 
 async def request_completion(
