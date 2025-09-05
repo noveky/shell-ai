@@ -5,7 +5,8 @@ log() {
     elif [[ $1 == start ]]; then
         export SESSION_LOG_FILE="/tmp/shell-session-logs/$(date +%Y%m%d_%H%M%S)"
         mkdir -p $(dirname "$SESSION_LOG_FILE")
-        exec script -fq "$SESSION_LOG_FILE"
+        shopt -q login_shell 2>/dev/null && LOGIN_FLAG=-l
+        exec script -fq "$SESSION_LOG_FILE" -c "$SHELL $LOGIN_FLAG"
     elif [[ $1 == status ]]; then
         if [[ -f "$SESSION_LOG_FILE" ]]; then
             echo "Session logging initialized, file: $SESSION_LOG_FILE"
