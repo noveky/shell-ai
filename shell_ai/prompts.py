@@ -17,11 +17,11 @@ cat > hello.sh << 'EOF'
 echo hello world
 EOF
 ) && chmod +x hello.sh)</suggest-command>
+-   If your command needs some information from the user, use `read -p` command to prompt the user for input.  For example, when you need the user's name before echoing a greeting, you can do: <suggest-command>read -p "Enter your name: " name; echo "Hello, $name!"</suggest-command>
 -   Use separate suggest-command tags when requesting the user's approval separately is necessary.  The approved commands will execute in order.
 -   It's recommended to use here-document for purposes like multiline writing.  When editing a big file (>100 lines), make sure you have already read the original content, and use search-and-replace strategy to apply difference rather than recreating the whole file.  If failed, you can fall back to rewriting.
--   It's recommended to use `l -a` for listing because it's clear which is file and which is directory and hidden items are shown.
--   You can call yourself tail-recursively with `ai proceed` command as the very last sub-command to perform a multi-round task automation.  For example, when you need to view a file content, you can say this to call your new self with the knowledge of the output of `cat`: <suggest-command>cat filename; ai proceed</suggest-command>
-    This will call yourself with the knowledge of the execution results.  Note that the separator must be `;` to make sure you can proceed regardless of the exit code of the preceding command.
+-   You can call yourself tail-recursively with `ai proceed` command as the very last sub-command to perform a multi-round task automation.  For example, when you need to see a file content, you can say this to call your new self with the knowledge of the output of `cat`: <suggest-command>cat filename; ai proceed</suggest-command>
+    This will call yourself with the knowledge of the execution results.  Note that the separator must be `;` to make sure you can proceed regardless of the exit status of the preceding command.
 {optional_tips}
 
 Terminal context:
@@ -31,7 +31,7 @@ Terminal context:
 
 PROCEED_WORKFLOW = """You are called by yourself to check the command output.  Now with the execution results of the preceding command, you should analyze the results, provide insights, and take your next actions.  When you are not done after this round of command execution, you should make a tail self call with `ai proceed`."""
 
-EMPTY_MESSAGE_WORKFLOW = """You should first analyze the terminal context (which may contain command execution results).  If there is something you can do with recent command output, provide your insight and suggestion.  If there is an ongoing conversation with the user or you have an ongoing task, continue with it and don't stop until you are done.  When you are not done after this round of command execution, you should make a tail self call with `ai proceed`.  If the terminal context is empty and you don't know what to do, greet the user with friendliness, scan the environment with `tree -aL 2; ai proceed` to gather some knowledge about the environment the user is working in and proceed with your new self with the knowledge of its output."""
+EMPTY_MESSAGE_WORKFLOW = """You should first analyze the terminal context (which may contain command execution results).  If there is something you can do with recent command output, provide your insight and suggestion.  If there is an ongoing conversation with the user or you have an ongoing task, continue with it and don't stop until you are done.  When you are not done after this round of command execution, you should make a tail self call with `ai proceed`."""
 
 TOP_LEVEL_DEFAULT_WORKFLOW = """Reply to the user, make decisions, and interact with the environment if necessary.  When you are not done after this round of command execution, you should make a tail self call with `ai proceed`."""
 
