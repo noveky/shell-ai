@@ -1,7 +1,7 @@
 # Session logging
 log() {
     if [[ -z $1 ]]; then
-        echo "Usage: log {start|status|file|list|view|clear|stop}"
+        echo "Usage: log {start|status|file|list|view|clear|stop|update}"
     elif [[ $1 == start ]]; then
         if [[ -n "$SESSION_LOG_FILE" ]]; then
             echo "Session logging already started, file: $SESSION_LOG_FILE" >&2
@@ -9,12 +9,12 @@ log() {
         fi
         export SESSION_LOG_FILE="/tmp/shell-session-logs/$(date +%Y%m%d_%H%M%S)"
         mkdir -p $(dirname "$SESSION_LOG_FILE")
-        update_prompt
         # Start scripting
         shopt -q login_shell 2>/dev/null && LOGIN_FLAG=-l
         exec script -fq "$SESSION_LOG_FILE" -c "$SHELL $LOGIN_FLAG"
         return 0
     elif [[ $1 == status ]]; then
+        log update
         if [[ -n "$SESSION_LOG_FILE" ]]; then
             echo "Session logging started, file: $SESSION_LOG_FILE" >&2
             return 0
@@ -33,36 +33,46 @@ log() {
     elif [[ $1 == list ]]; then
         ls -lA "$(dirname "$SESSION_LOG_FILE")"
     elif [[ $1 == view ]]; then
-        cat -e "$SESSION_LOG_FILE" | tail
-        echo ""
+        if log status 2>/dev/null; then
+            # Use tail to avoid following the file while it's being written to
+            # Use cat -e to escape ANSI in the output
+            tail -n +1 "$SESSION_LOG_FILE" | cat -e && echo
+        else
+            echo "Session logging not started" >&2
+            return 1
+        fi
     elif [[ $1 == clear ]]; then
         : >"$SESSION_LOG_FILE"
     elif [[ $1 == stop ]]; then
         rm -f "$SESSION_LOG_FILE"
         unset SESSION_LOG_FILE
-        update_prompt
-    fi
-}
-
-LOG_INDICATOR_TEXT="✱ "
-LOG_INDICATOR="\[\e[38;2;255;99;132m\]${LOG_INDICATOR_TEXT}\[\e[0m\]"
-
-# Function to update prompt based on logging status
-update_prompt() {
-    if log status 2>/dev/null; then
-        # Add logging indicator if not already present
-        if [[ "$PS1" != *"✱"* ]]; then
-            PS1="${LOG_INDICATOR}${PS1}"
+        log update
+    elif [[ $1 == update ]]; then
+        # Check log file existence
+        if [[ ! -f "$SESSION_LOG_FILE" ]]; then
+            unset SESSION_LOG_FILE
         fi
-    else
-        # Remove logging indicator
-        PS1="${PS1//$LOG_INDICATOR_TEXT}"
+        # Update prompt
+        LOG_INDICATOR_TEXT="✱ "
+        LOG_INDICATOR="\[\e[38;2;255;99;132m\]${LOG_INDICATOR_TEXT}\[\e[0m\]"
+        if [[ -n "$SESSION_LOG_FILE" ]]; then
+            # Add logging indicator if not already present
+            if [[ "$PS1" != *"✱"* ]]; then
+                PS1="${LOG_INDICATOR}${PS1}"
+            fi
+        else
+            # Remove logging indicator
+            PS1="${PS1//$LOG_INDICATOR_TEXT}"
+        fi
     fi
 }
 
+# Set PROMPT_COMMAND to automatically update prompt before each command
+PROMPT_COMMAND="log update${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 
+# Start session logging
 log start 2>/dev/null
-update_prompt
+log update
 trap 'log stop' EXIT
 
 # Override clear command
