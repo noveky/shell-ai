@@ -3,7 +3,7 @@ log() {
     if [[ -z $1 ]]; then
         echo "Usage: log {start|status|file|list|view|clear|stop|update}"
     elif [[ $1 == start ]]; then
-        if [[ -n "$SESSION_LOG_FILE" ]]; then
+        if [[ -f "$SESSION_LOG_FILE" ]]; then
             echo "Session logging already started, file: $SESSION_LOG_FILE" >&2
             return 1
         fi
@@ -14,8 +14,7 @@ log() {
         exec script -fq "$SESSION_LOG_FILE" -c "$SHELL $LOGIN_FLAG"
         return 0
     elif [[ $1 == status ]]; then
-        log update
-        if [[ -n "$SESSION_LOG_FILE" ]]; then
+        if [[ -f "$SESSION_LOG_FILE" ]]; then
             echo "Session logging started, file: $SESSION_LOG_FILE" >&2
             return 0
         else
@@ -46,11 +45,10 @@ log() {
     elif [[ $1 == stop ]]; then
         rm -f "$SESSION_LOG_FILE"
         unset SESSION_LOG_FILE
-        log update
     elif [[ $1 == update ]]; then
-        # Check log file existence
-        if [[ ! -f "$SESSION_LOG_FILE" ]]; then
-            unset SESSION_LOG_FILE
+        # Start logging if accidentally terminated
+        if [[ -n "$SESSION_LOG_FILE" && ! -f "$SESSION_LOG_FILE" ]]; then
+            log start 2>/dev/null
         fi
         # Update prompt
         LOG_INDICATOR_TEXT="✱ "
