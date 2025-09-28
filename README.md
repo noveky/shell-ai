@@ -65,6 +65,14 @@ Currently the tool only supports bash.
     Your boot time is mainly delayed by apt-daily-upgrade.service, which takes over 3 minutes during boot. This is much higher than other services. Disabling or changing the scheduling of this service can significantly reduce your boot time.
     ```
 
+## Customization
+
+Add this line to your `.bashrc` file to customize logging indicator:
+
+```bash
+export LOG_INDICATOR_TEXT="<your custom logging indicator>"
+```
+
 ## Contributing
 
 Pull requests are welcome! Please open an issue first to discuss what you'd like to change.

@@ -51,7 +51,9 @@ log() {
             log start 2>/dev/null
         fi
         # Update prompt
-        LOG_INDICATOR_TEXT="✱ "
+        if [[ -z "${LOG_INDICATOR_TEXT+x}" ]]; then
+            LOG_INDICATOR_TEXT="✱ "
+        fi
         LOG_INDICATOR="\[\e[38;2;255;99;132m\]${LOG_INDICATOR_TEXT}\[\e[0m\]"
         if [[ -n "$SESSION_LOG_FILE" ]]; then
             # Add logging indicator if not already present
