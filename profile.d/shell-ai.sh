@@ -1,3 +1,5 @@
+[[ $- != *i* ]] && return
+
 # Session logging
 log() {
     if [[ -z $1 ]]; then
