@@ -27,7 +27,7 @@ def flush_buffer(
     """Print the buffer contents to stderr and clear it."""
 
     if buffer.value:
-        print_styled(buffer.value, end="", flush=True, file=file)
+        print(buffer.value, end="", flush=True, file=file)
         acc.value += buffer.value
         buffer.value = ""
 

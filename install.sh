@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+YES_MODE=true
+DEV_MODE=false
+
 # Tool configuration
 TOOL_NAME="shell-ai"
 MIN_PYTHON_VERSION="3.12"
@@ -40,6 +43,9 @@ setup_user_context() {
             # Running as root directly
             log_warn "Running as root is not recommended"
             log_warn "The tool will be installed for root user only"
+            if [[ "$YES_MODE" == "true" ]]; then
+                exit 0
+            fi
             read -p "Continue anyway? [y/N]: " -r
             if [[ ! $REPLY =~ ^[Yy]$ ]]; then
                 log_info "Installation cancelled"
@@ -187,6 +193,23 @@ get_project_root() {
 install_project() {
     log_step "Installing project files..."
 
+    if [[ "$DEV_MODE" == "true" ]]; then
+        log_info "Dev mode: Creating symbolic link to project source..."
+        
+        # Remove existing installation if any
+        if [[ -e "$INSTALL_DIR" ]]; then
+            rm -rf "$INSTALL_DIR"
+        fi
+        
+        # Create parent directory
+        run_as_user mkdir -p "$(dirname "$INSTALL_DIR")"
+        
+        # Create symbolic link
+        run_as_user ln -s "$PROJECT_SOURCE" "$INSTALL_DIR"
+        log_info "Symbolic link created: $INSTALL_DIR -> $PROJECT_SOURCE"
+        return 0
+    fi
+
     # Create installation directory
     run_as_user mkdir -p "$INSTALL_DIR"
 
@@ -206,6 +229,12 @@ install_project() {
 # Setup virtual environment
 setup_venv() {
     log_step "Setting up Python virtual environment..."
+
+    if [[ "$DEV_MODE" == "true" ]]; then
+        log_info "Dev mode: Python virtual environment configuration skipped"
+
+        return 0
+    fi
 
     VENV_PATH="$INSTALL_DIR/.venv"
 
@@ -338,6 +367,9 @@ setup_config() {
 
     if [[ -f "$CONFIG_FILE" ]]; then
         log_info "Configuration file already exists: $CONFIG_FILE"
+        if [[ "$YES_MODE" == "true" ]]; then
+            return 0
+        fi
         read -p "Do you want to reconfigure? [y/N]: " -r
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
             return 0
@@ -405,6 +437,21 @@ install_extensions() {
 
 # Main installation function
 main() {
+    # Parse command line arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -e)
+                DEV_MODE=true
+                log_info "Development mode enabled"
+                ;;
+            -y)
+                YES_MODE=true
+                log_info "Yes mode enabled"
+                ;;
+        esac
+        shift
+    done
+
     setup_user_context
     check_python
     detect_shell
