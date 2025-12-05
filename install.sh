@@ -112,7 +112,7 @@ check_python() {
 
     # Detect the most recent Python version
     PYTHON_CMD=""
-    for version in 3.13 3.12 3.11 3.10 3.9 3.8; do
+    for version in 3.14 3.13 3.12 3.11 3.10 3.9 3.8; do
         if command -v "python$version" &>/dev/null; then
             PYTHON_CMD="python$version"
             break
@@ -183,7 +183,7 @@ get_project_root() {
     fi
 
     # Set installation directory
-    INSTALL_DIR="$TARGET_HOME/.local/share/$TOOL_NAME"
+    INSTALL_DIR="$TARGET_HOME/.local/lib/$TOOL_NAME"
 
     log_info "Project source: $PROJECT_SOURCE"
     log_info "Installation directory: $INSTALL_DIR"
