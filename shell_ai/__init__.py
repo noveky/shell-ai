@@ -14,13 +14,6 @@ PRIMARY_COLOR = (38, 2, 255, 99, 132)
 SECONDARY_COLOR = (38, 2, 255, 159, 64)
 
 
-agent_name = None
-
-
-def agent_display_name():
-    return agent_name or "AI"
-
-
 def flush_buffer(
     buffer: Ref[str], acc: Ref[str], event_queue: list[Event], *, file: TextIO
 ):
@@ -41,8 +34,8 @@ def buffer_handler(
         flush_buffer(buffer, acc, event_queue, file=sys.stdout)
         return
 
-    OPENING_TAG = "<suggest-command>"
-    CLOSING_TAG = "</suggest-command>"
+    OPENING_TAG = "<exec>"
+    CLOSING_TAG = "</exec>"
 
     # Check if the buffer contains tags or partial tags
     if buffer.value.find(OPENING_TAG) != -1 or any(
@@ -78,7 +71,7 @@ def start_handler(
 ):
     if not print_mode:
         print_styled(
-            f"{agent_display_name()}:",
+            f"AI:",
             "bold",
             code_tuple=PRIMARY_COLOR,
             file=sys.stderr,
@@ -103,7 +96,6 @@ def parse_arguments():
     )
 
     parser.add_argument("message", nargs="*", help="Message to the AI")
-    parser.add_argument("--agent-name", type=str, help="Agent name for the AI")
     parser.add_argument("--context-file", type=str, help="Path to the context file")
     parser.add_argument(
         "--model", type=str, help="Model to use (overrides config file)"
@@ -116,7 +108,6 @@ def parse_arguments():
     args = parser.parse_args()
 
     return (
-        str(args.agent_name or ""),
         str(args.context_file) if args.context_file is not None else None,
         " ".join(args.message),
         args.model,
@@ -127,7 +118,7 @@ def parse_arguments():
 
 async def main():
     global agent_name
-    agent_name, context_file, message, model, print_mode, raw_mode = parse_arguments()
+    context_file, message, model, print_mode, raw_mode = parse_arguments()
 
     # Read the shell session context if context file is provided
     session_context = None
@@ -140,8 +131,6 @@ async def main():
 
     # Construct the prompt
     prompt = construct_prompt(
-        agent_name=agent_display_name(),
-        is_top_level_agent=not agent_name,
         session_context=session_context[-(MAX_CONTEXT_LENGTH or 0) :]
         if session_context is not None
         else "Failed to acquire context",
@@ -172,7 +161,7 @@ async def main():
                 # Ask the user for confirmation before running the command
                 print(
                     styled(
-                        f"\n{agent_display_name()} suggests running this command:",
+                        f"\nAI suggests running this command:",
                         "bold",
                         code_tuple=PRIMARY_COLOR,
                     ),
@@ -197,15 +186,13 @@ async def main():
     for i, command in enumerate(commands_to_run, 1):
         if proceed_pattern.search(command):
             has_proceed = True
-        command = proceed_pattern.sub(
-            f"ai-agent {agent_display_name()} proceed {message}", command
-        )
-        combined_command += f"printf {escape_printf(styled(f'\n{agent_display_name()} is executing approved command ({i}/{len(commands_to_run)}):', 'bold', code_tuple=PRIMARY_COLOR))};\n"
+        command = proceed_pattern.sub(f"ai proceed {message}", command)
+        combined_command += f"printf {escape_printf(styled(f'\nAI is executing approved command ({i}/{len(commands_to_run)}):', 'bold', code_tuple=PRIMARY_COLOR))};\n"
         combined_command += f"printf {escape_printf('\n')};\n"
         # combined_command += f"printf {escape_printf('\n' + indent(command, 0))};\n"
         combined_command += f"{{\n{command.strip()}\n}};"
     if commands_to_run and not has_proceed:
-        combined_command += f"printf {escape_printf(styled(f'\n{agent_display_name()} done.\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
+        combined_command += f"printf {escape_printf(styled(f'\nAI done.\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
 
     if print_mode:
         pass

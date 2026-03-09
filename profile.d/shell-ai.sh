@@ -87,9 +87,6 @@ clear() {
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 PROJECT_ROOT="$(dirname $SCRIPT_DIR)"
 export PATH="$PATH:$PROJECT_ROOT/bin"
-ai-agent() {
-    eval "$(shell-ai --agent-name "$1" --context-file "$SESSION_LOG_FILE" -- "$2")"
-}
 ai() {
-    ai-agent "" "$*"
+    eval "$(shell-ai --context-file "$SESSION_LOG_FILE" -- "$2")"
 }
