@@ -88,5 +88,5 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 PROJECT_ROOT="$(dirname $SCRIPT_DIR)"
 export PATH="$PATH:$PROJECT_ROOT/bin"
 ai() {
-    eval "$(shell-ai --context-file "$SESSION_LOG_FILE" -- "$2")"
+    eval "$(shell-ai --context-file "$SESSION_LOG_FILE" -- "$*")"
 }
