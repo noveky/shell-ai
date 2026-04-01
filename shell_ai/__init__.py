@@ -71,7 +71,7 @@ def start_handler(
 ):
     if not print_mode:
         print_styled(
-            f"AI:",
+            "AI:",
             "bold",
             code_tuple=PRIMARY_COLOR,
             file=sys.stderr,
@@ -161,7 +161,7 @@ async def main():
                 # Ask the user for confirmation before running the command
                 print(
                     styled(
-                        f"\nAI suggests running this command:",
+                        "\nAI suggests running this command:",
                         "bold",
                         code_tuple=PRIMARY_COLOR,
                     ),
@@ -186,13 +186,12 @@ async def main():
     for i, command in enumerate(commands_to_run, 1):
         if proceed_pattern.search(command):
             has_proceed = True
-        command = proceed_pattern.sub(f"ai proceed {message}", command)
         combined_command += f"printf {escape_printf(styled(f'\nAI is executing approved command ({i}/{len(commands_to_run)}):', 'bold', code_tuple=PRIMARY_COLOR))};\n"
         combined_command += f"printf {escape_printf('\n')};\n"
         # combined_command += f"printf {escape_printf('\n' + indent(command, 0))};\n"
         combined_command += f"{{\n{command.strip()}\n}};"
     if commands_to_run and not has_proceed:
-        combined_command += f"printf {escape_printf(styled(f'\nAI done.\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
+        combined_command += f"printf {escape_printf(styled('\nAI done.\n', 'bold', code_tuple=PRIMARY_COLOR))};\n"
 
     if print_mode:
         pass
